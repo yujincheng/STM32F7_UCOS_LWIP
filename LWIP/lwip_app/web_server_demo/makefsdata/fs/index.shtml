@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+<title>Yujincheng UTF8</title>
+</head>
+<body>
+  <p>
+  测试显示
+  </p>
+
+  <p>
+  测试表单 form_buttom
+  <form method="get" action="/leds.cgi">
+    LED1:
+       <input type="radio" name="LED1" value="LED1ON" id="LED1_0">ON
+       <input name="LED1" type="radio" id="LED1_1" value="LED1OFF">OFF<br>
+   <br>
+   <input type="submit" value="LED">
+  </form>
+
+  <form method="get" action="/ip.cgi">
+    <input type="text" name="IPaddr">
+   <br>
+   <input type="submit" value="IP">
+  </form>
+  </p>
+
+  <p>
+  测试显示内存字符
+  <!--#0-->
+  </p>
+
+  <p>
+  测试显示输入后回显示
+  <!--#1-->
+  </p>
+
+
+</body>
+</html>

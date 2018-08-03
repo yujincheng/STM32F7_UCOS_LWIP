@@ -32,20 +32,22 @@
 
 //控制LED和BEEP的CGI handler
 const char* LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[]);
-const char* BEEP_CGI_Handler(int iIndex,int iNumParams,char *pcParam[],char *pcValue[]);
+const char* IP_CGI_Handler(int iIndex,int iNumParams,char *pcParam[],char *pcValue[]);
+
+char IP_addr_cache[20];
 
 static const char *ppcTAGs[]=  //SSI的Tag
 {
-	"t", //ADC值
-	"w", //温度值
-	"h", //时间
-	"y"  //日期
+	"0", //ADC值
+	"1", //温度值
+	"2", //时间
+	"3"  //日期
 };
 
 static const tCGI ppcURLs[]= //cgi程序
 {
 	{"/leds.cgi",LEDS_CGI_Handler},
-	{"/beep.cgi",BEEP_CGI_Handler},
+	{"/ip.cgi",IP_CGI_Handler},
 };
 
 
@@ -64,121 +66,38 @@ static int FindCGIParameter(const char *pcToFind,char *pcParam[],int iNumParams)
 }
 
 
-//SSIHandler中需要用到的处理ADC的函数
-void ADC_Handler(char *pcInsert)
+void TEST_Handler(char *pcInsert)
 { 
-	char Digit1=0, Digit2=0, Digit3=0, Digit4=0; 
-    uint32_t ADCVal = 0;        
+	//准备添加到html中的数据
+    *pcInsert       = 'F';
+    *(pcInsert + 1) = 'U';
+    *(pcInsert + 2) = 'C';
+    *(pcInsert + 3) = 'K';
+}
 
-    //获取ADC的值
-	ADCVal = Get_Adc_Average(5,10); //获取ADC1_CH5的电压值
-		
-    //转换为电压 ADCVval * 0.8mv
-    ADCVal = (uint32_t)(ADCVal * 0.8);  
-     
-    Digit1= ADCVal/1000;
-    Digit2= (ADCVal-(Digit1*1000))/100 ;
-    Digit3= (ADCVal-((Digit1*1000)+(Digit2*100)))/10;
-    Digit4= ADCVal -((Digit1*1000)+(Digit2*100)+ (Digit3*10));
-        
+void TEST1_Handler(char *pcInsert)
+{      
     //准备添加到html中的数据
-    *pcInsert       = (char)(Digit1+0x30);
-    *(pcInsert + 1) = (char)(Digit2+0x30);
-    *(pcInsert + 2) = (char)(Digit3+0x30);
-    *(pcInsert + 3) = (char)(Digit4+0x30);
+	u8 ip_index = 0;
+		for(ip_index = 0; ip_index < 20; ip_index++){
+					*(pcInsert + ip_index) = IP_addr_cache[ip_index];
+					if(!IP_addr_cache[ip_index]){
+						break;
+					}
+				} 
 }
 
-//SSIHandler中需要用到的处理内部温度传感器的函数
-void Temperate_Handler(char *pcInsert)
-{
-	char Digit1=0, Digit2=0, Digit3=0, Digit4=0,Digit5=0; 
-	short Temperate = 0;
-		
-	//获取内部温度值
-	Temperate = Get_Temprate(); //获取温度值 此处扩大了100倍
-	Digit1 = Temperate / 10000;
-	Digit2 = (Temperate % 10000)/1000;
-    Digit3 = (Temperate % 1000)/100 ;
-    Digit4 = (Temperate % 100)/10;
-    Digit5 = Temperate % 10;
-	//添加到html中的数据
-	*pcInsert 		= (char)(Digit1+0x30);
-	*(pcInsert+1) = (char)(Digit2+0x30);
-	*(pcInsert+2)	=	(char)(Digit3+0x30);
-	*(pcInsert+3) = '.';
-	*(pcInsert+4) = (char)(Digit4+0x30);
-	*(pcInsert+5) = (char)(Digit5+0x30);
-}
-
-//SSIHandler中需要用到的处理RTC时间的函数
-void RTCTime_Handler(char *pcInsert)
-{
-    RTC_TimeTypeDef RTC_TimeStruct;
-	u8 hour,min,sec;
-	
-    HAL_RTC_GetTime(&RTC_Handler,&RTC_TimeStruct,RTC_FORMAT_BIN);
-    hour=RTC_TimeStruct.Hours;
-    min=RTC_TimeStruct.Minutes;
-    sec=RTC_TimeStruct.Seconds;
-	
-	*pcInsert = 		(char)((hour/10) + 0x30);
-	*(pcInsert+1) = (char)((hour%10) + 0x30);
-	*(pcInsert+2) = ':';
-	*(pcInsert+3) = (char)((min/10) + 0x30);
-	*(pcInsert+4) = (char)((min%10) + 0x30);
-	*(pcInsert+5) = ':';
-	*(pcInsert+6) = (char)((sec/10) + 0x30);
-	*(pcInsert+7) = (char)((sec%10) + 0x30);
-}
-
-//SSIHandler中需要用到的处理RTC日期的函数
-void RTCdate_Handler(char *pcInsert)
-{
-	u8 year,month,date,week;
-    RTC_DateTypeDef RTC_DateStruct;
-    
-    HAL_RTC_GetDate(&RTC_Handler,&RTC_DateStruct,RTC_FORMAT_BIN);
-    year=RTC_DateStruct.Year;
-    month=RTC_DateStruct.Month;
-    date=RTC_DateStruct.Date;
-    week=RTC_DateStruct.WeekDay;
-	
-	*pcInsert = '2';
-	*(pcInsert+1) = '0';
-	*(pcInsert+2) = (char)((year/10) + 0x30);
-	*(pcInsert+3) = (char)((year%10) + 0x30);
-	*(pcInsert+4) = '-';
-	*(pcInsert+5) = (char)((month/10) + 0x30);
-	*(pcInsert+6) = (char)((month%10) + 0x30);
-	*(pcInsert+7) = '-';
-	*(pcInsert+8) = (char)((date/10) + 0x30);
-	*(pcInsert+9) = (char)((date%10) + 0x30);
-	*(pcInsert+10) = ' ';
-	*(pcInsert+11) = 'w';
-	*(pcInsert+12) = 'e';
-	*(pcInsert+13) = 'e';
-	*(pcInsert+14) = 'k';
-	*(pcInsert+15) = ':';
-	*(pcInsert+16) = (char)(week + 0x30);
-	
-}
-//SSI的Handler句柄
 static u16_t SSIHandler(int iIndex,char *pcInsert,int iInsertLen)
 {
 	switch(iIndex)
 	{
 		case 0: 
-				ADC_Handler(pcInsert);
+				TEST_Handler(pcInsert);
 				break;
-		case 1:
-				Temperate_Handler(pcInsert);
+		case 1: 
+				TEST1_Handler(pcInsert);
 				break;
-		case 2:
-				RTCTime_Handler(pcInsert);
-				break;
-		case 3:
-				RTCdate_Handler(pcInsert);
-				break;
+		
 	}
 	return strlen(pcInsert);
 }
@@ -203,35 +122,33 @@ const char* LEDS_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *
 		  }
 		}
 	 }
-	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0&&PCF8574_ReadBit(BEEP_IO)==0) 		return "/STM32_LED_ON_BEEP_ON.shtml";  	//LED1开,BEEP关
-	else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0&&PCF8574_ReadBit(BEEP_IO)==1) return "/STM32_LED_ON_BEEP_OFF.shtml";	//LED1开,BEEP开
-	else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==1&&PCF8574_ReadBit(BEEP_IO)==1) return "/STM32_LED_OFF_BEEP_OFF.shtml";	//LED1关,BEEP开
-	else return "/STM32_LED_OFF_BEEP_ON.shtml";   							//LED1关,BEEP关					
+	return "/index.shtml";					
 }
 
-//BEEP的CGI控制句柄
-const char *BEEP_CGI_Handler(int iIndex,int iNumParams,char *pcParam[],char *pcValue[])
+
+//CGI IP控制句柄
+const char* IP_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pcValue[])
 {
-	u8 i=0;
-	iIndex = FindCGIParameter("BEEP",pcParam,iNumParams);  //找到BEEP的索引号
-	if(iIndex != -1) //找到BEEP索引号
-	{
-        PCF8574_WriteBit(BEEP_IO,1);//关闭
-		for(i = 0;i < iNumParams;i++)
-		{
-			if(strcmp(pcParam[i],"BEEP") == 0)  //查找CGI参数
-			{
-				if(strcmp(pcValue[i],"BEEPON") == 0) //打开BEEP
-                    PCF8574_WriteBit(BEEP_IO,0);
-				else if(strcmp(pcValue[i],"BEEPOFF") == 0) //关闭BEEP
-                    PCF8574_WriteBit(BEEP_IO,1);//关闭
-			}
+	u8 i=0;  //注意根据自己的GET的参数的多少来选择i值范围
+	u8 ip_index = 0;
+	iIndex = FindCGIParameter("IPaddr",pcParam,iNumParams);
+	//只有一个CGI句柄 iIndex=0
+	if (iIndex != -1)
+	{		
+		for (i=0; i<iNumParams; i++) //检查CGI参数
+		{		  
+			if (strcmp(pcParam[i] , "IPaddr")==0)  //检查参数"led" 属于控制LED1灯的
+		  {
+				for(ip_index = 0; ip_index < 20; ip_index++){
+					IP_addr_cache[ip_index] = pcValue[i][ip_index];
+					if(!IP_addr_cache[ip_index]){
+						break;
+					}
+				}
+		  }
 		}
-	}
-	if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0&&PCF8574_ReadBit(BEEP_IO)==0) 		return "/STM32_LED_ON_BEEP_ON.shtml";  	//LED1开,BEEP关
-	else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==0&&PCF8574_ReadBit(BEEP_IO)==1) return "/STM32_LED_ON_BEEP_OFF.shtml";	//LED1开,BEEP开
-	else if(HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_0)==1&&PCF8574_ReadBit(BEEP_IO)==1) return "/STM32_LED_OFF_BEEP_OFF.shtml";	//LED1关,BEEP开
-	else return "/STM32_LED_OFF_BEEP_ON.shtml";   							//LED1关,BEEP关	
+	 }
+	return "/index.shtml";					
 }
 
 //SSI句柄初始化
