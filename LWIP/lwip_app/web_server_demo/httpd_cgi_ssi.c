@@ -10,6 +10,7 @@
 #include "lcd.h"
 #include <string.h>
 #include <stdlib.h>
+#include "stmflash.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F4&F7开发板
@@ -80,6 +81,11 @@ void TEST1_Handler(char *pcInsert)
     //准备添加到html中的数据
 	u8 ip_index = 0;
 		for(ip_index = 0; ip_index < 20; ip_index++){
+				IP_addr_cache[ip_index] = 0;
+				}
+	STMFLASH_Read(FLASH_SAVE_ADDR,(u32*)IP_addr_cache,5);
+	
+		for(ip_index = 0; ip_index < 20; ip_index++){
 					*(pcInsert + ip_index) = IP_addr_cache[ip_index];
 					if(!IP_addr_cache[ip_index]){
 						break;
@@ -145,6 +151,7 @@ const char* IP_CGI_Handler(int iIndex, int iNumParams, char *pcParam[], char *pc
 						break;
 					}
 				}
+				STMFLASH_Write(FLASH_SAVE_ADDR,(u32*)IP_addr_cache,5);
 		  }
 		}
 	 }

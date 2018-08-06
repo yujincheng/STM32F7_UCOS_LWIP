@@ -18,6 +18,7 @@
 #include "lwipopts.h"
 #include "includes.h"
 #include "httpd.h"
+#include "stmflash.h"
 /************************************************
  ALIENTEK 阿波罗STM32F7开发板 网络实验10
  WebServer实验-HAL库函数版
