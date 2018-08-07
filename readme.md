@@ -250,3 +250,90 @@ void TEST_Handler(char *pcInsert)
 至此，SSI 和 CGI 已经配置完成。
 
 对keil工程进行编译即可。
+
+
+
+在上一篇文章[webserver](https://www.yujincheng.net/2018/08/03/WebserverOnSTM32.html)中，我在OpenWRT上实现了网页。但是如果真正通过网页配置单片机各项功能，还需要把内存中的值写写到片上的FLASH中。并且能够把内存中的值读读取到内存中。
+
+读写flash会用到额外的两个文件，stmflash.c 和 stmflsh.h，这两个文件加入了更新版本的工程项目中。
+
+```Git
+git clone https://git.coding.net/yujincheng/STM32F7_UCOS_LWIP.git
+cd STM32F7_UCOS_LWIP
+git checkout e73411eb662590b43877df7324c77b22bb8ffbc3
+```
+
+可以看到，在 HARDWARE/STMFLASH 文件夹下，有这两个文件。项目中应该已经包含了这两个文件，包括源文件和头文件。
+
+如果没有包含头文件，需要再项目设置中，添加头文件。打开keil，选择 flash -> Config flash tools。找到C/C++ 选项卡，在include path 中，添加 ..\HARDWARE\STMFLASH 路径。
+
+如下图所示
+
+![配置include](https://www.yujincheng.net/post_img/2018-08-06/conf_include.jpg)
+
+在需要读写flash的文件处，```#include "stmflash.h"```
+
+若需要写入/读取 flash，调用函数，
+
+```C
+void STMFLASH_Write(u32 WriteAddr,u32 *pBuffer,u32 NumToWrite);
+void STMFLASH_Read(u32 WriteAddr,u32 *pBuffer,u32 NumToWrite);
+```
+
+三个参数依次为 flash 地址、写入/读取的内存数据指针、长度数目（多少个32bit）。
+
+因为flash读写限制一定需要 4Byte 对齐。
+
+flash 为下表。一般程序从 0x0800_0000 开始烧写，所以用户对flash操作的地址应该在程序段之后。在操作中，选择flash中最后一个主存储扇区，起始地址为 0x080C_0000。
+
+| 块             | AXIM接口上的块基址        | ICTM接口上的块基址        | 大小  |
+| -------------- | ------------------------- | ------------------------- | ----- |
+| 主存储器 扇区0 | 0X0800 0000-0X0800   7FFF | 0X0020 0000-0X0020   7FFF | 32KB  |
+| 主存储器 扇区1 | 0X0800 8000-0X0800   FFFF | 0X0020 8000-0X0020   FFFF | 32KB  |
+| 主存储器 扇区2 | 0X0801 0000-0X0801   7FFF | 0X0021 0000-0X0021   7FFF | 32KB  |
+| 主存储器 扇区3 | 0X0801 8000-0X0801   FFFF | 0X0021 8000-0X0021   FFFF | 32KB  |
+| 主存储器 扇区4 | 0X0802 0000-0X0803   FFFF | 0X0022 0000-0X0023   FFFF | 128KB |
+| 主存储器 扇区5 | 0X0804 0000-0X0807   FFFF | 0X0024 0000-0X0027   FFFF | 256KB |
+| 主存储器 扇区6 | 0X0808 0000-0X080B   FFFF | 0X0028 0000-0X002B   FFFF | 256KB |
+| 主存储器 扇区7 | 0X080C 0000-0X080F   FFFF | 0X002C 0000-0X002F   FFFF | 256KB |
+| 系统存储器     | 0X1FF0 0000-0X1FF0   EDBF | 0X0010 0000-0X0010   EDBF | 60KB  |
+| OTP区域        | 0X1FF0 F000-0X1FF0   F41F | 0X0010 F000-0X0010   F41F | 1056B |
+| 选项字节       | 0X1FFF 0000-0X1FFF   001F |                           | 32B   |
+
+在文件 LWIP\lwip_app\web_server_demo\httpd_cgi_ssi.c 中 154 行对文件进行写操作，即在网页配置了IP地址之后把IP地址从内存中写入flash中。为如下程序段的 13 行。其中FLASH_SAVE_ADDR 在 stmflash.h 中用宏定义设置为 ```#define FLASH_SAVE_ADDR 0x080C0000```，IP_addr_cache为缓存指针，长度为 5个4字节，共20bit。
+
+```C
+if (iIndex != -1)
+    {
+        for (i=0; i<iNumParams; i++)
+        {
+            if (strcmp(pcParam[i] , "IPaddr")==0)
+          {
+                for(ip_index = 0; ip_index < 20; ip_index++){
+                    IP_addr_cache[ip_index] = pcValue[i][ip_index];
+                    if(!IP_addr_cache[ip_index]){
+                        break;
+                    }
+                }
+                STMFLASH_Write(FLASH_SAVE_ADDR,(u32*)IP_addr_cache,5);
+          }
+        }
+     }
+```
+
+同样的，在文件 LWIP\lwip_app\web_server_demo\httpd_cgi_ssi.c 中 86 行。下列代码段的第4行。把数据从flash中读到内存中，再通过SSI显示到shtml上。
+
+```C
+for (ip_index = 0; ip_index < 20; ip_index++){
+    IP_addr_cache[ip_index] = 0;
+}
+STMFLASH_Read(FLASH_SAVE_ADDR,(u32*)IP_addr_cache,5);
+for (ip_index = 0; ip_index < 20; ip_index++){
+    *(pcInsert + ip_index) = IP_addr_cache[ip_index];
+    if(!IP_addr_cache[ip_index]){
+        break;
+    }
+}
+```
+
+相比于上一篇文章[webserver](https://www.yujincheng.net/2018/08/03/WebserverOnSTM32.html)中的实验，该实验也是在网页中配置一个字符串，然后显示到网页的另一个界面。所不同的是，该实验配置了flash，关机后可以保持上次配置的数据。

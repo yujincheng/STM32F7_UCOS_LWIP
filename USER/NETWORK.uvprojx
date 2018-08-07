@@ -137,7 +137,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -335,7 +335,7 @@
               <MiscControls>--diag_suppress=550</MiscControls>
               <Define>STM32F767xx,USE_HAL_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F7xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\SDRAM;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\LAN8720;..\HARDWARE\PCF8574;..\HARDWARE\TIMER;..\HARDWARE\MPU;..\HARDWARE\ADC;..\HARDWARE\RTC;..\USMART;..\MALLOC;..\UCOSII\uC-LIB;..\UCOSII\uC-CPU;..\UCOSII\UCOS_BSP;..\UCOSII\uCOS-CONFIG;..\UCOSII\uCOS-II\Source;..\UCOSII\uC-CPU\ARM-Cortex-M4\RealView;..\UCOSII\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\UCOSII\uCOS-II\Ports\ARM-Cortex-M4\Generic\RealView;..\LWIP;..\LWIP\arch;..\LWIP\lwip-1.4.1\src\include;..\LWIP\lwip-1.4.1\src\include\ipv4;..\LWIP\lwip-1.4.1\src\include\netif;..\LWIP\lwip_app\lwip_comm;..\LWIP\lwip_app\web_server_demo</IncludePath>
+              <IncludePath>..\CORE;..\OBJ;..\USER;..\HALLIB\STM32F7xx_HAL_Driver\Inc;..\SYSTEM\delay;..\SYSTEM\sys;..\SYSTEM\usart;..\HARDWARE\LED;..\HARDWARE\KEY;..\HARDWARE\LCD;..\HARDWARE\SDRAM;..\HARDWARE\IIC;..\HARDWARE\24CXX;..\HARDWARE\LAN8720;..\HARDWARE\PCF8574;..\HARDWARE\TIMER;..\HARDWARE\MPU;..\HARDWARE\ADC;..\HARDWARE\RTC;..\HARDWARE\STMFLASH;..\USMART;..\MALLOC;..\UCOSII\uC-LIB;..\UCOSII\uC-CPU;..\UCOSII\UCOS_BSP;..\UCOSII\uCOS-CONFIG;..\UCOSII\uCOS-II\Source;..\UCOSII\uC-CPU\ARM-Cortex-M4\RealView;..\UCOSII\uC-LIB\Ports\ARM-Cortex-M4\RealView;..\UCOSII\uCOS-II\Ports\ARM-Cortex-M4\Generic\RealView;..\LWIP;..\LWIP\arch;..\LWIP\lwip-1.4.1\src\include;..\LWIP\lwip-1.4.1\src\include\ipv4;..\LWIP\lwip-1.4.1\src\include\netif;..\LWIP\lwip_app\lwip_comm;..\LWIP\lwip_app\web_server_demo</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -643,6 +643,11 @@
               <FileName>rtc.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\RTC\rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stmflash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\STMFLASH\stmflash.c</FilePath>
             </File>
           </Files>
         </Group>
